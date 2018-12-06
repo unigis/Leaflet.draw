@@ -85,66 +85,81 @@ L.drawLocal = {
 			// #TODO: this should be reorganized where actions are nested in actions
 			// ex: actions.undo  or actions.cancel
 			actions: {
-				title: 'Cancel drawing',
-				text: 'Cancel'
+				title: '取消绘制',
+				text: '取消'
 			},
 			finish: {
-				title: 'Finish drawing',
-				text: 'Finish'
+				title: '结束绘制',
+				text: '完成'
 			},
 			undo: {
-				title: 'Delete last point drawn',
-				text: 'Delete last point'
+				title: '删除最近绘制一个点',
+				text: '删除最近绘制一个点'
 			},
 			buttons: {
-				polyline: 'Draw a polyline',
-				polygon: 'Draw a polygon',
-				rectangle: 'Draw a rectangle',
-				circle: 'Draw a circle',
-				marker: 'Draw a marker',
-				circlemarker: 'Draw a circlemarker'
+				polyline: '折线',
+				polygon: '多边形',
+				rectangle: '矩形',
+				circle: '圆形',
+				marker: '地图标记',
+				circlemarker: '绘制圆形注记',
+				bezier: '绘制箭头'
 			}
 		},
 		handlers: {
 			circle: {
 				tooltip: {
-					start: 'Click and drag to draw circle.'
+					start: '点击画圆'
 				},
-				radius: 'Radius'
+				radius: '半径'
 			},
 			circlemarker: {
 				tooltip: {
-					start: 'Click map to place circle marker.'
+					start: '标记圆形图标'
 				}
 			},
 			marker: {
 				tooltip: {
-					start: 'Click map to place marker.'
+					start: '标记图标'
 				}
 			},
 			polygon: {
 				tooltip: {
-					start: 'Click to start drawing shape.',
-					cont: 'Click to continue drawing shape.',
-					end: 'Click first point to close this shape.'
+					start: '',
+					cont: '',
+					end: ''
+				}
+			},
+			bezier: {
+				tooltip: {
+					start: '',
+					end: ''
+				}
+			},
+			arrow: {
+				error: '',
+				tooltip: {
+					start: '',
+					cont: '',
+					end: ''
 				}
 			},
 			polyline: {
 				error: '<strong>Error:</strong> shape edges cannot cross!',
 				tooltip: {
-					start: 'Click to start drawing line.',
-					cont: 'Click to continue drawing line.',
-					end: 'Click last point to finish line.'
+					start: '点击开始绘制',
+					cont: '',
+					end: '双击结束绘制'
 				}
 			},
 			rectangle: {
 				tooltip: {
-					start: 'Click and drag to draw rectangle.'
+					start: ''
 				}
 			},
 			simpleshape: {
 				tooltip: {
-					end: 'Release mouse to finish drawing.'
+					end: ''
 				}
 			}
 		}
@@ -153,35 +168,35 @@ L.drawLocal = {
 		toolbar: {
 			actions: {
 				save: {
-					title: 'Save changes',
-					text: 'Save'
+					title: '保存',
+					text: '保存'
 				},
 				cancel: {
-					title: 'Cancel editing, discards all changes',
-					text: 'Cancel'
+					title: '取消编辑',
+					text: '取消'
 				},
 				clearAll: {
-					title: 'Clear all layers',
-					text: 'Clear All'
+					title: '清空图层',
+					text: '清空'
 				}
 			},
 			buttons: {
-				edit: 'Edit layers',
-				editDisabled: 'No layers to edit',
-				remove: 'Delete layers',
-				removeDisabled: 'No layers to delete'
+				edit: '编辑图层',
+				editDisabled: '没有可编辑的图层',
+				remove: '删除图层',
+				removeDisabled: '没有可删除的图层'
 			}
 		},
 		handlers: {
 			edit: {
 				tooltip: {
-					text: 'Drag handles or markers to edit features.',
-					subtext: 'Click cancel to undo changes.'
+					text: '拖动边界要素',
+					subtext: '撤销'
 				}
 			},
 			remove: {
 				tooltip: {
-					text: 'Click on a feature to remove.'
+					text: '点击移动地图要素'
 				}
 			}
 		}

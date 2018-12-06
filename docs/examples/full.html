@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Leaflet.draw vector editing handlers</title>
-
+	<meta charset="utf-8">
     <script src="libs/leaflet-src.js"></script>
     <link rel="stylesheet" href="libs/leaflet.css"/>
 
@@ -29,6 +29,8 @@
     <script src="../../src/draw/handler/Draw.CircleMarker.js"></script>
     <script src="../../src/draw/handler/Draw.Polygon.js"></script>
     <script src="../../src/draw/handler/Draw.Rectangle.js"></script>
+	<script src="../../src/draw/handler/Draw.Bezier.js"></script>
+	<script src="../../src/draw/handler/Draw.Arrow.js"></script>
 
 
     <script src="../../src/edit/EditToolbar.js"></script>
@@ -45,7 +47,7 @@
     <script src="../../src/edit/handler/Edit.Circle.js"></script>
 </head>
 <body>
-<div id="map" style="width: 800px; height: 600px; border: 1px solid #ccc"></div>
+<div id="map" style="width: 1200px; height: 800px; border: 1px solid #ccc"></div>
 
 <script>
     var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

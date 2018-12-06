@@ -1,11 +1,11 @@
 /**
- * @class L.Draw.Polyline
- * @aka Draw.Polyline
- * @inherits L.Draw.Feature
+ * @class L.Draw.Bezier
+ * @aka Draw.Bezier
+ * @inherits L.Draw.Bezier
  */
-L.Draw.Polyline = L.Draw.Feature.extend({
+L.Draw.Bezier = L.Draw.Feature.extend({
 	statics: {
-		TYPE: 'polyline'
+		TYPE: 'bezier'
 	},
 
 	Poly: L.Polyline,
@@ -254,7 +254,9 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		this._updateGuide(newPos);
 
 		// Update the mouse marker position
-		this._mouseMarker.setLatLng(latlng);
+        this._mouseMarker.setLatLng(latlng);
+       
+
 
 		L.DomEvent.preventDefault(e.originalEvent);
 	},
@@ -278,7 +280,7 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 			var originalEvent = e.originalEvent;
 			var clientX = originalEvent.clientX;
 			var clientY = originalEvent.clientY;
-			this._startPoint.call(this, clientX, clientY);
+            this._startPoint.call(this, clientX, clientY);
 		}
 	},
 
@@ -313,8 +315,10 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 	},
 
 	// ontouch prevented by clickHandled flag because some browsers fire both click/touch events,
-	// causing unwanted behavior
+    // causing unwanted behavior
+    //单次点击时触发
 	_onTouch: function (e) {
+        
 		var originalEvent = e.originalEvent;
 		var clientX;
 		var clientY;
@@ -388,18 +392,29 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		return marker;
 	},
 
+    //更新当前鼠标移动的屏幕坐标
 	_updateGuide: function (newPos) {
 		var markerCount = this._markers ? this._markers.length : 0;
 
 		if (markerCount > 0) {
 			newPos = newPos || this._map.latLngToLayerPoint(this._currentLatLng);
 
-			// draw the guide line
-			this._clearGuides();
-			this._drawGuide(
-				this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
-				newPos
-			);
+			// 先清空原来的线
+            this._clearGuides();
+			//再重新绘制新的线
+			var listLngs=[];
+			if(markerCount >=2){
+				for(var i =0;i<this._markers.length;i++){
+					listLngs.push(this._markers[i].getLatLng())
+				}
+				listLngs.push(this._currentLatLng);
+				this._drawBeizerGuide(listLngs);
+			}else{
+				this._drawGuide(
+					this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
+					newPos
+				);
+			}
 		}
 	},
 
@@ -415,6 +430,14 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		}
 	},
 
+	_clearSamePts:function (latlngs) {
+		for (var e = latlngs.length, i = 0; i < e - 1;) 
+		this._equalFuzzy(latlngs[i].lng, latlngs[i + 1].lng) && this._equalFuzzy(latlngs[i].lat, latlngs[i + 1].lat) ? (latlngs.splice(i, 1), e--) : i++;
+        return latlngs
+    },
+	_drawBeizerGuide: function (latlngs) {
+		this._poly.setLatLngs(this._clearSamePts(this._createBezierPt(this._getBezierDefaultPts(latlngs))));
+	},
 	_drawGuide: function (pointA, pointB) {
 		var length = Math.floor(Math.sqrt(Math.pow((pointB.x - pointA.x), 2) + Math.pow((pointB.y - pointA.y), 2))),
 			guidelineDistance = this.options.guidelineDistance,
@@ -457,6 +480,9 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 			}
 		}
 	},
+	_distance: function (latlngA, latlngB) {
+        return Math.sqrt((latlngA.lng - latlngB.lng) * (latlngA.lng - latlngB.lng) + (latlngA.lat - latlngB.lat) * (latlngA.lat - latlngB.lat))
+    },
 
 	// removes all child elements (guide dashes) from the guides container
 	_clearGuides: function () {
@@ -465,8 +491,83 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 				this._guidesContainer.removeChild(this._guidesContainer.firstChild);
 			}
 		}
-	},
-
+    },
+    
+    _getBezierDefaultPts:function(latlngs){
+        var e = [], i = latlngs.length;
+        if (i < 3) 
+        {
+            for (n = 0; n != i; ++n) 
+            e[n] = latlngs[n].clone(); 
+        }
+        else {
+			//{lat:0,lng:0}
+            for (var o = 0, n = 0; n < 3 * i - 2; n += 3) 
+            e[n] = latlngs[o].clone(), e[n + 1] = {lat:0,lng:0}, e[n + 2] = {lat:0,lng:0}, o++;
+			for (n = 1; n < i - 1; n++) 
+			this._getTrianglePoints(8, 3, latlngs[n - 1], latlngs[n], latlngs[n + 1], e[3 * n - 1], e[3 * n + 1]);
+			this._getTrapezoidPoints(.6, e[0], e[3], e[2], e[1]), 
+			this._getTrapezoidPoints(.6, e[3 * i - 3], e[3 * i - 6], e[3 * i - 5], e[3 * i - 4]), e[3 * i - 1] = e[3 * i - 2] = latlngs[i - 1].clone()	
+        }
+        return e        
+    },
+    _getTrianglePoints:function (t, e, i, o, n, s, a) {
+        var l = i.lng, r = i.lat, u = o.lng, p = o.lat, h = n.lng, c = n.lat;
+        this._getPointsByTriangle(t, e, l, r, u, p, h, c, s, a)
+    },
+    _getPointsByTriangle:function (t, e, i, o, n, s, a, l, r, u) {
+        var p = n + (a - i), h = s + (l - o), c = 0, y = 0;
+        if (i == a) c = i, y = h; else if (o == l) c = p, y = o; else {
+            var g = 1 * (l - o) / (a - i), d = o - i * g;
+            y = g * (c = (h + p / g - d) / (g + 1 / g)) + d
+        }
+        var f = Math.sqrt(1 * (n - p) * (n - p) + 1 * (s - h) * (s - h)),
+            S = Math.sqrt(1 * (i - n) * (i - n) + 1 * (o - s) * (o - s)),
+            P = Math.sqrt(1 * (n - a) * (n - a) + 1 * (s - l) * (s - l)), m = 0;
+		p = c + (p - c) * (m = S + P ? 1 + (P - S) * t / (P + S) : 1), 
+		h = y + (h - y) * m, 
+		0 == f && (f = 1), 
+		r.lng = n + (n - p) * S / (e * f), 
+		r.lat = s + (s - h) * S / (e * f), 
+		u.lng = n + (p - n) * P / (e * f), 
+		u.lat = s + (h - s) * P / (e * f)
+    },
+    _getTrapezoidPoints:function (t, e, i, o, n) {
+        var s = e.lng, a = e.lat, l = i.lng, r = i.lat, u = o.lng, p = o.lat;
+        return this._getPointsByTrapezoid(t, s, a, l, r, u, p, n)
+    }, 
+    _getPointsByTrapezoid:function (t, e, i, o, n, s, a, l) {
+        var r = 0, u = 0, p = 0, h = 0;
+        if (0 == Math.abs(i - n)) r = e + o - s, u = a; else if (0 == Math.abs(e - o)) r = s, u = i + n - a; else {
+            var c = 1 * (i - n) / (e - o), y = a - c * s;
+            u = c * (r = ((n + i) / 2 + (e + o) / (2 * c) - y) / (c + 1 / c)) + y, r = 2 * r - s, u = 2 * u - a
+        }
+        var g = Math.sqrt(1 * (e - o) * (e - o) + 1 * (i - n) * (i - n)),
+            d = Math.sqrt(1 * (e - r) * (e - r) + 1 * (i - u) * (i - u));
+        return g > 0 ? (p = e + (o - e) * d / g, h = i + (n - i) * d / g) : (p = e, h = i), l.lng = p + (r - p) * t, l.lat = h + (u - h) * t, l
+    },
+    _createBezierPt:function(latlngs){
+        var e = latlngs.length, i = [];
+		if (latlngs.length < 3) 
+		{for (o = 0; o < e; o++) i[o] = latlngs[o].clone(); }
+		else {
+            e /= 3;
+            for (var o = 0; o < 3 * e && !(o + 4 >= 3 * e); o += 3) {
+                var n = latlngs[o].lng, s = latlngs[o].lat, a = latlngs[o + 1].lng, l = latlngs[o + 1].lat, r = latlngs[o + 2].lng, u = latlngs[o + 2].lat,
+                    p = latlngs[o + 3].lng, h = latlngs[o + 3].lat;
+                if (this._equalFuzzy(n, a, 1e-10) && this._equalFuzzy(s, l, 1e-10) && this._equalFuzzy(r, p, 1e-10) && this._equalFuzzy(u, h, 1e-10)) i.push({lng:n, lat:s}), i.push({lng:r, lat:u}); else for (var c = 0; c <= 1; c += .03125) {
+                    var y, g, d, f, S = c * c, P = S * c;
+                    y = 1 - 3 * c + 3 * S - P, g = 3 * (c - 2 * S + P), d = 3 * (S - P), f = P;
+                    var m = {lng:y * n + g * a + d * r + f * p, lat:y * s + g * l + d * u + f * h};
+                    i.push(m)
+                }
+            }
+        }
+        return i
+    },
+    _equalFuzzy:function (t, e, i) {
+        return i || (i = 1e-18), Math.abs(t - e) <= i
+    },
 	_getTooltipText: function () {
 		var showLength = this.options.showLength,
 			labelText, distanceStr;

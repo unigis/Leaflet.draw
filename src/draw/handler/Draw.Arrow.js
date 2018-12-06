@@ -1,14 +1,15 @@
 /**
- * @class L.Draw.Polyline
- * @aka Draw.Polyline
- * @inherits L.Draw.Feature
+ * @class L.Draw.Arrow
+ * @aka Draw.Arrow
+ * @inherits L.Draw.Arrow
  */
-L.Draw.Polyline = L.Draw.Feature.extend({
+L.Draw.Arrow = L.Draw.Feature.extend({
 	statics: {
-		TYPE: 'polyline'
+		TYPE: 'arrow'
 	},
 
 	Poly: L.Polyline,
+
 
 	options: {
 		allowIntersection: true,
@@ -78,6 +79,8 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 			this._poly = new L.Polyline([], this.options.shapeOptions);
 
 			this._tooltip.updateContent(this._getTooltipText());
+
+			this._latlngs =[];
 
 			// Make a transparent marker that will used to catch click events. These click
 			// events will create the vertices. We need to do this so we can ensure that
@@ -203,6 +206,8 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		if (this._markers.length <= 1 || !this._shapeIsValid()) {
 			return;
 		}
+		
+	
 
 		this._fireCreatedEvent();
 		this.disable();
@@ -220,12 +225,27 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 			this._showErrorTooltip();
 			return;
 		}
-
+		this._drawEnd();
 		this._fireCreatedEvent();
 		this.disable();
 		if (this.options.repeatMode) {
 			this.enable();
 		}
+	},
+	_drawEnd:function(){
+		var listLngs =[];
+		for(var i =0;i<this._markers.length;i++){
+			listLngs.push(this._markers[i].getLatLng())
+		}
+	
+		var left =this._findPoint(this._markers[this._markers.length-1].getLatLng(),this._markers[this._markers.length-2].getLatLng(),0.008,22.5);
+		listLngs.push(left);
+
+		listLngs.push(this._markers[this._markers.length-1].getLatLng());
+		var right =this._findPoint(this._markers[this._markers.length-1].getLatLng(),this._markers[this._markers.length-2].getLatLng(),0.008,-22.5)
+		listLngs.push(right);
+
+		this._poly.setLatLngs(listLngs)
 	},
 
 	// Called to verify the shape is valid when the user tries to finish it
@@ -394,14 +414,59 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		if (markerCount > 0) {
 			newPos = newPos || this._map.latLngToLayerPoint(this._currentLatLng);
 
+
+
+				var listLngs =[];
+				for(var i =0;i<this._markers.length;i++){
+					listLngs.push(this._markers[i].getLatLng())
+				}
+				listLngs.push(this._currentLatLng);
+
+				
+			
+	
 			// draw the guide line
 			this._clearGuides();
 			this._drawGuide(
 				this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
 				newPos
 			);
+
+
+			var left =this._findPoint(this._currentLatLng,this._markers[markerCount - 1].getLatLng(),0.003,22.5);
+			this._drawGuide(
+				this._map.latLngToLayerPoint(left),
+				newPos
+			);
+			listLngs.push(left);
+			listLngs.push(this._currentLatLng);
+
+			var right =this._findPoint(this._currentLatLng,this._markers[markerCount - 1].getLatLng(),0.003,-22.5)
+			listLngs.push(right);
+			this._drawGuide(
+				this._map.latLngToLayerPoint(right),
+				newPos
+			);
+
+			// this._poly.setLatLngs(listLngs)
 		}
 	},
+	_findPoint:function (pntStart, pntEnd, dDistance, angle) {
+		//在直线(pntStart, pntEnd)绕pntStart逆时针旋转dAngle度所成的直线上，到pntStart的距离为dDistance的点。
+        if (pntStart === pntEnd || Math.abs(dDistance) < 1e-18) return pntStart;
+        var n = this.radian(pntStart, pntEnd) + angle * Math.PI / 180, s = pntStart.lng + dDistance * Math.cos(n), a = pntStart.lat + dDistance * Math.sin(n);
+        return {lng:s, lat:a}
+	},
+	radian:function (pntStart, pntEnd) {
+		//计算两点的弧度（和正东方向的逆时针夹角）。
+		var i, o, n = 0;
+		i = pntEnd.lng - pntStart.lng, o = pntEnd.lat - pntStart.lat;
+        return   (n = Math.atan2(o, i)) < 0 && (n += 2 * Math.PI), n
+    },
+	_rotateAngle:function (latlngA, angle, latlngB) {
+        var o = angle, n = Math.cos(o), s = Math.sin(o),a = latlngB.lng - latlngA.lng, l = latlngB.lat - latlngA.lat;
+        return latlngB.lng = a * n - l * s + latlngA.lng, latlngB.lat = a * s + l * n + latlngA.lat, latlngB
+    },
 
 	_updateTooltip: function (latLng) {
 		var text = this._getTooltipText();

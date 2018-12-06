@@ -14,7 +14,9 @@ L.DrawToolbar = L.Toolbar.extend({
 		rectangle: {},
 		circle: {},
 		marker: {},
-		circlemarker: {}
+		// circlemarker: {},
+		bezier:{},
+		arrow:{}
 	},
 
 	// @method initialize(): void
@@ -65,6 +67,16 @@ L.DrawToolbar = L.Toolbar.extend({
 				enabled: this.options.circlemarker,
 				handler: new L.Draw.CircleMarker(map, this.options.circlemarker),
 				title: L.drawLocal.draw.toolbar.buttons.circlemarker
+			},
+			{
+				enabled: this.options.bezier,
+				handler: new L.Draw.Bezier(map, this.options.bezier),
+				title: L.drawLocal.draw.toolbar.buttons.bezier
+			},
+			{
+				enabled: this.options.arrow,
+				handler: new L.Draw.Arrow(map, this.options.arrow),
+				title: L.drawLocal.draw.toolbar.buttons.arrow
 			}
 		];
 	},
