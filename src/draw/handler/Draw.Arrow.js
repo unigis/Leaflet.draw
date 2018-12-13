@@ -238,12 +238,18 @@ L.Draw.Arrow = L.Draw.Feature.extend({
 			listLngs.push(this._markers[i].getLatLng())
 		}
 	
-		var left =this._findPoint(this._markers[this._markers.length-1].getLatLng(),this._markers[this._markers.length-2].getLatLng(),0.008,22.5);
-		listLngs.push(left);
+		var left =this._findPoint(this._map.latLngToLayerPoint(this._markers[this._markers.length-1].getLatLng()),
+					this._map.latLngToLayerPoint(this._markers[this._markers.length-2].getLatLng()),100,22.5);
+		
+		listLngs.push(this._map.layerPointToLatLng(left));
 
 		listLngs.push(this._markers[this._markers.length-1].getLatLng());
-		var right =this._findPoint(this._markers[this._markers.length-1].getLatLng(),this._markers[this._markers.length-2].getLatLng(),0.008,-22.5)
-		listLngs.push(right);
+
+		var right =this._findPoint(this._map.latLngToLayerPoint(this._markers[this._markers.length-1].getLatLng()),
+				this._map.latLngToLayerPoint(this._markers[this._markers.length-2].getLatLng()),100,-22.5)
+		
+		
+		listLngs.push(this._map.layerPointToLatLng(right));
 
 		this._poly.setLatLngs(listLngs)
 	},
@@ -414,16 +420,13 @@ L.Draw.Arrow = L.Draw.Feature.extend({
 		if (markerCount > 0) {
 			newPos = newPos || this._map.latLngToLayerPoint(this._currentLatLng);
 
-
+			console.log(newPos);
 
 				var listLngs =[];
 				for(var i =0;i<this._markers.length;i++){
 					listLngs.push(this._markers[i].getLatLng())
 				}
-				listLngs.push(this._currentLatLng);
-
-				
-			
+				listLngs.push(this._currentLatLng);			
 	
 			// draw the guide line
 			this._clearGuides();
@@ -433,18 +436,24 @@ L.Draw.Arrow = L.Draw.Feature.extend({
 			);
 
 
-			var left =this._findPoint(this._currentLatLng,this._markers[markerCount - 1].getLatLng(),0.003,22.5);
+			var left =this._findPoint(this._map.latLngToLayerPoint(this._currentLatLng),
+								this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
+								100,22.5);
 			this._drawGuide(
-				this._map.latLngToLayerPoint(left),
+				left,
 				newPos
 			);
-			listLngs.push(left);
+
+			listLngs.push(this._map.layerPointToLatLng(left));
 			listLngs.push(this._currentLatLng);
 
-			var right =this._findPoint(this._currentLatLng,this._markers[markerCount - 1].getLatLng(),0.003,-22.5)
-			listLngs.push(right);
+			var right =this._findPoint(this._map.latLngToLayerPoint(this._currentLatLng),
+							this._map.latLngToLayerPoint(this._markers[markerCount - 1].getLatLng()),
+							100,-22.5)
+			listLngs.push(this._map.layerPointToLatLng(right));
+
 			this._drawGuide(
-				this._map.latLngToLayerPoint(right),
+				right,
 				newPos
 			);
 
@@ -454,13 +463,13 @@ L.Draw.Arrow = L.Draw.Feature.extend({
 	_findPoint:function (pntStart, pntEnd, dDistance, angle) {
 		//在直线(pntStart, pntEnd)绕pntStart逆时针旋转dAngle度所成的直线上，到pntStart的距离为dDistance的点。
         if (pntStart === pntEnd || Math.abs(dDistance) < 1e-18) return pntStart;
-        var n = this.radian(pntStart, pntEnd) + angle * Math.PI / 180, s = pntStart.lng + dDistance * Math.cos(n), a = pntStart.lat + dDistance * Math.sin(n);
-        return {lng:s, lat:a}
+        var n = this.radian(pntStart, pntEnd) + angle * Math.PI / 180, s = pntStart.x + dDistance * Math.cos(n), a = pntStart.y + dDistance * Math.sin(n);
+        return {x:s, y:a}
 	},
 	radian:function (pntStart, pntEnd) {
 		//计算两点的弧度（和正东方向的逆时针夹角）。
 		var i, o, n = 0;
-		i = pntEnd.lng - pntStart.lng, o = pntEnd.lat - pntStart.lat;
+		i = pntEnd.x - pntStart.x, o = pntEnd.y - pntStart.y;
         return   (n = Math.atan2(o, i)) < 0 && (n += 2 * Math.PI), n
     },
 	_rotateAngle:function (latlngA, angle, latlngB) {

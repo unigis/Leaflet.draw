@@ -103,7 +103,8 @@ L.drawLocal = {
 				circle: '圆形',
 				marker: '地图标记',
 				circlemarker: '绘制圆形注记',
-				bezier: '绘制箭头'
+				bezier: '绘制箭头',
+				arrow:'方向箭头'
 			}
 		},
 		handlers: {
